@@ -1,18 +1,24 @@
-org 0x7C00
+org 0x0
 bits 16
+
 
 %define ENDL 0x0D, 0x0A
 
+
 start:
-    jmp main
+    ; print hello world message
+    mov si, msg_hello
+    call puts
 
-
+.halt:
+    cli
+    hlt
 
 ;
 ; Prints a string to the screen
-; Parameters:
-;     - ds:si - pointer to the string
-; 
+; Params:
+;   - ds:si points to string
+;
 puts:
     ; save registers we will modify
     push si
@@ -20,48 +26,20 @@ puts:
     push bx
 
 .loop:
-    lodsb               ; load next character in al
-    or al, al           ; check if al is 0 (end of string)
-    jz .done            ; if al is 0, we are done
+    lodsb               ; loads next character in al
+    or al, al           ; verify if next character is null?
+    jz .done
 
-    mov ah, 0x0E        ; teletype output
-    mov bh, 0x00        ; page number
-    int 0x10            ; call BIOS interrupt
+    mov ah, 0x0E        ; call bios interrupt
+    mov bh, 0           ; set page number to 0
+    int 0x10
 
     jmp .loop
 
 .done:
-    ; restore registers
     pop bx
     pop ax
-    pop si
+    pop si    
     ret
 
-
-main:
-    
-    ; setup data segment
-    mov ax, 0           ; can't write to ds/es directly
-    mov ds, ax
-    mov es, ax
-
-    ; setup stack
-    mov ss, ax
-    mov sp, 0x7C00
-
-    ; print message
-    mov si, msg_hello
-    call puts
-
-    hlt
-
-
-.halt:
-    jmp .halt
-
-
-msg_hello: db 'Hello, World!', ENDL, 0
-
-
-times 510-($-$$) db 0
-dw 0xAA55
+msg_hello: db 'Hello world FabiOS!', ENDL, 0
